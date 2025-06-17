@@ -6,6 +6,7 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
 import androidx.room.Upsert
+import edu.ucne.registroticket.data.local.Entities.ConversationEntity
 import edu.ucne.registroticket.data.local.Entities.TicketEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -36,4 +37,13 @@ interface TicketDao {
 
     @Query("SELECT * FROM Tickets")
     fun getAll(): Flow<List<TicketEntity>>
+
+    @Query("SELECT * FROM Conversation WHERE ticketId = :ticketId ORDER BY conversationId ASC")
+    fun getConversacionesByTicket(ticketId: Int): Flow<List<ConversationEntity>>
+
+    @Insert
+    suspend fun insertConversation(conversation: ConversationEntity)
+
+    @Delete
+    suspend fun deleteConversation(conversation: ConversationEntity)
 }
