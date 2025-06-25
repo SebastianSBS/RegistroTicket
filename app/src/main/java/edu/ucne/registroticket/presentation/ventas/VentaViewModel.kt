@@ -11,9 +11,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.math.BigDecimal
 import javax.inject.Inject
-import kotlin.text.toBigDecimalOrNull
 
 @HiltViewModel
 class VentaViewModel @Inject constructor(
@@ -79,48 +77,49 @@ class VentaViewModel @Inject constructor(
                 }
             }
         }
+    }
 
-        fun onEvent(event: VentasEvent) {
-            when (event) {
-                is VentasEvent.DescripcionChange -> {
-                    _state.update {
-                        it.copy(
-                            venta = it.venta.copy(descripcion = event.descripcion)
-                        )
-                    }
+    fun onEvent(event: VentasEvent) {
+        when (event) {
+            is VentasEvent.VentaChange -> {
+                _state.update {
+                    it.copy (
+                        venta = it.venta.copy(ventaId = event.ventaId)
+                    )
                 }
+            }
 
-                is VentasEvent.MontoChange -> {
-                    val monto = try {
-                        BigDecimal(event.monto)
-                    } catch (e: Exception) {
-                        BigDecimal.ZERO
-                    }
-
-                    _state.update {
-                        it.copy(
-                            venta = it.venta.copy(monto = monto)
-                        )
-                    }
+            is VentasEvent.DescripcionChange -> {
+                _state.update {
+                    it.copy(
+                        venta = it.venta.copy(descripcion = event.descripcion)
+                    )
                 }
+            }
 
-                VentasEvent.Save -> {
-                    postVentas()
-                    onEvent(VentasEvent.New)
+            is VentasEvent.MontoChange -> {
+                _state.update {
+                    it.copy(
+                        venta = it.venta.copy(monto = event.monto)
+                    )
                 }
+            }
 
-                VentasEvent.New -> {
-                    _state.update {
-                        it.copy(
-                            venta = VentaDto(),
-                            successMessage = null,
-                            errorMessage = "",
-                            isLoading = false
-                        )
-                    }
+            VentasEvent.Save -> {
+                postVentas()
+                onEvent(VentasEvent.New)
+            }
+
+            VentasEvent.New -> {
+                _state.update {
+                    it.copy(
+                        venta = VentaDto(),
+                        successMessage = null,
+                        errorMessage = "",
+                        isLoading = false
+                    )
                 }
             }
         }
-
     }
 }
