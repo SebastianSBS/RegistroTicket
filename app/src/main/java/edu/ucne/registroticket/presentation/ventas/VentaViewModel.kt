@@ -21,10 +21,6 @@ class VentaViewModel @Inject constructor(
     private val _state = MutableStateFlow(VentasUiState())
     val state = _state.asStateFlow()
 
-    init {
-        getVentas()
-    }
-
     private fun getVentas() {
         viewModelScope.launch {
             ventaRepository.getVentas().collectLatest { result ->
@@ -50,9 +46,64 @@ class VentaViewModel @Inject constructor(
     }
 
     fun postVentas() {
+        val currentVenta = _state.value.venta
+
+        if (currentVenta.descripcion.isNullOrBlank()) {
+            _state.update {
+                it.copy(errorMessage = "La descripción es requerida")
+            }
+            return
+        }
+
+        if (currentVenta.monto == null || currentVenta.monto <= 0) {
+            _state.update {
+                it.copy(errorMessage = "El monto debe ser mayor a 0")
+            }
+            return
+        }
+
         viewModelScope.launch {
-            ventaRepository.postVentas(_state.value.venta).collectLatest { result ->
-                when(result){
+            try {
+                ventaRepository.postVentas(currentVenta).collectLatest { result ->
+                    when(result){
+                        is Resource.Loading -> {
+                            _state.update { it.copy(isLoading = true) }
+                        }
+
+                        is Resource.Success -> {
+                            _state.update {
+                                it.copy(
+                                    successMessage = "Guardado correctamente",
+                                    isLoading = false
+                                )
+                            }
+                        }
+
+                        is Resource.Error -> {
+                            _state.update {
+                                it.copy(
+                                    errorMessage = result.message ?: "Ocurrio un error, intentelo de nuevo",
+                                    isLoading = false
+                                )
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                _state.update {
+                    it.copy(
+                        errorMessage = "Error de conexión: ${e.message}",
+                        isLoading = false
+                    )
+                }
+            }
+        }
+    }
+
+    fun deleteVenta(){
+        viewModelScope.launch {
+            ventaRepository.deleteVenta(_state.value.venta.ventaId).collectLatest { result ->
+                when(result) {
                     is Resource.Loading -> {
                         _state.update { it.copy(isLoading = true) }
                     }
@@ -60,7 +111,7 @@ class VentaViewModel @Inject constructor(
                     is Resource.Success -> {
                         _state.update {
                             it.copy(
-                                successMessage = "Guardado correctamente",
+                                successMessage = "Eliminado correctamente",
                                 isLoading = false
                             )
                         }
@@ -79,15 +130,47 @@ class VentaViewModel @Inject constructor(
         }
     }
 
+    fun getVentaById(ventaId: Int) {
+        viewModelScope.launch {
+            ventaRepository.getVentaById(ventaId).collectLatest { result ->
+                when (result) {
+                    is Resource.Loading -> {
+                        _state.update { it.copy(isLoading = true) }
+                    }
+
+                    is Resource.Success -> {
+                        _state.update {
+                            it.copy(
+                                venta = result.data ?: VentaDto(),
+                                isLoading = false
+                            )
+                        }
+                    }
+
+                    is Resource.Error -> {
+                        _state.update {
+                            it.copy(
+                                errorMessage = "Ocurrio un error, intentelo de nuevo",
+                                isLoading = false
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
     fun onEvent(event: VentasEvent) {
         when (event) {
             is VentasEvent.VentaChange -> {
                 _state.update {
-                    it.copy (
+                    it.copy(
                         venta = it.venta.copy(ventaId = event.ventaId)
                     )
                 }
             }
+
 
             is VentasEvent.DescripcionChange -> {
                 _state.update {
@@ -107,7 +190,6 @@ class VentaViewModel @Inject constructor(
 
             VentasEvent.Save -> {
                 postVentas()
-                onEvent(VentasEvent.New)
             }
 
             VentasEvent.New -> {
@@ -119,6 +201,18 @@ class VentaViewModel @Inject constructor(
                         isLoading = false
                     )
                 }
+            }
+
+            VentasEvent.Delete -> {
+                deleteVenta()
+            }
+
+            VentasEvent.FindById -> {
+                getVentaById(_state.value.venta.ventaId ?: 0)
+            }
+
+            VentasEvent.LoadVentas -> {
+                getVentas()
             }
         }
     }

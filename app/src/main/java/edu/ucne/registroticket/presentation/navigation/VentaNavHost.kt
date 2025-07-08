@@ -29,7 +29,7 @@ fun VentaNavHost(
 
         composable<Screen.Venta> {
             val args = it.toRoute<Screen.Venta>()
-            VentasScreen  (
+            VentasScreen (
                 VentaId = args.ventaId,
                 goBack = {
                     navHostController.navigateUp()

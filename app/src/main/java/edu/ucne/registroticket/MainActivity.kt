@@ -69,6 +69,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import androidx.room.Room
+import dagger.hilt.android.AndroidEntryPoint
 import edu.ucne.registroticket.data.local.Database.TicketDb
 import edu.ucne.registroticket.data.local.Entities.ConversationEntity
 import edu.ucne.registroticket.data.local.Entities.TicketEntity
@@ -77,6 +78,7 @@ import edu.ucne.registroticket.presentation.navigation.VentaNavHost
 import edu.ucne.registroticket.ui.theme.RegistroTicketTheme
 import kotlinx.coroutines.launch
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {

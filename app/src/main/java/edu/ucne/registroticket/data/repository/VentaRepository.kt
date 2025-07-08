@@ -56,6 +56,21 @@ class VentaRepository @Inject constructor(
         }
     }
 
+    fun deleteVenta(ventaId: Int?): Flow<Resource<VentaDto>> = flow{
+        try {
+            emit(Resource.Loading())
+
+            ventasAPI.deleteVenta(ventaId)
+            emit(Resource.Success(VentaDto()))
+
+        } catch (e: HttpException) {
+            emit(Resource.Error(e.message ?: "Error al conectarse con la API"))
+        }
+        catch (e: Exception) {
+            emit(Resource.Error(e.message ?: "Error inesperado, verificar tu conexion a internet"))
+        }
+    }
+
 
 
 }
